@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorusNet · Reasoning Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER + NAV -->
+        <header class="app-header">
+            <a class="logo-area" href="index.html" style="text-decoration:none;">
+                <span class="logo-mark"></span>
+                <div>
+                    <h1>PHASELOCK <span class="agent-tag reasoning">TorusNet</span></h1>
+                    <p class="subtitle">Reasoning Engine · 15,000-agent torus society</p>
+                </div>
+            </a>
+            <nav class="page-nav">
+                <a href="index.html" class="home">Home</a>
+                <a href="torusnet.html" class="active torus">TorusNet</a>
+                <a href="fusioncore.html" class="fusion">FusionCore</a>
+            </nav>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span>Reasoning fabric online · 15,000 nodes</span>
+            </div>
+        </header>
+
+        <main class="app-body">
+            <!-- LEFT: CONTROLS & REASONING -->
+            <section class="panel left-panel">
+                <div class="panel-card input-card">
+                    <h2>Simulation Control</h2>
+                    <div class="control-group">
+                        <label for="prompt-input">Input Query / Workload Prompt</label>
+                        <textarea id="prompt-input" placeholder="Enter a complex STEM problem, code request, or domain scenario...">Analyze the molecular stability of a graphene-oxide monolayer under thermal strain.</textarea>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 10px;">
+                        <label>Ingest Multimodal Attachments</label>
+                        <div class="multimodal-attachments" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+                            <div style="display: flex; gap: 6px;">
+                                <label class="attachment-btn" id="attach-img-label" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; color: #9ca3af; transition: all 0.2s;">
+                                    <input type="file" id="attach-img" accept="image/png, image/jpeg" style="display:none;">
+                                    &#128247; Add Image
+                                </label>
+                                <label class="attachment-btn" id="attach-data-label" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; color: #9ca3af; transition: all 0.2s;">
+                                    <input type="file" id="attach-data" accept=".csv, .json, .txt" style="display:none;">
+                                    &#128202; Add Data
+                                </label>
+                                <label class="attachment-btn" id="attach-pdf-label" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; color: #9ca3af; transition: all 0.2s;">
+                                    <input type="file" id="attach-pdf" accept=".pdf" style="display:none;">
+                                    &#128196; Add PDF
+                                </label>
+                            </div>
+                            <div id="attachments-list" style="font-size: 9px; color: #06b6d4; font-family: 'Space Grotesk'; display: flex; flex-direction: column; gap: 4px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-row" style="margin-top: 10px;">
+                        <div class="control-group full-width" style="width: 100%;">
+                            <label for="view-layer">Visual Representation Layer</label>
+                            <select id="view-layer" style="width: 100%;">
+                                <option value="specialty">Specialty Distribution (20 specialties)</option>
+                                <option value="activity">Active Heatmap / Workload Density</option>
+                                <option value="congestion">Congestion Areas (Traffic Overload)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="button-row" style="margin-top: 12px;">
+                        <button id="run-btn" class="btn primary" style="width: 100%;">Run WSE TorusNet</button>
+                    </div>
+                    <div class="control-group" style="margin-top:12px;">
+                        <label for="cerebras-key">Cerebras API Key &mdash; live gemma-4-31b</label>
+                        <input type="password" id="cerebras-key" placeholder="csk-..." autocomplete="off" spellcheck="false" style="width:100%; background:var(--bg-sunken); border:1px solid var(--border); border-radius:3px; padding:8px 10px; color:var(--text-primary); font-family:'IBM Plex Mono',monospace; font-size:11px; outline:none;">
+                        <span style="font-size:9px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace;">Stored only in this browser &middot; powers the live verified answer</span>
+                    </div>
+                    <div style="margin-top:10px; font-size:10px; color:var(--text-muted); line-height:1.5; font-family:'JetBrains Mono',monospace;">
+                        On each run, TorusNet emits a live state snapshot for the <a href="fusioncore.html" style="color:var(--neon-magenta);">FusionCore</a> control agent to analyze &amp; repair.
+                    </div>
+                </div>
+
+                <div class="panel-card grover-card" id="grover-card" style="display: none; margin-bottom: 12px; max-height: 180px;">
+                    <div class="card-header">
+                        <h2>Grover Amplitude Amplification</h2>
+                        <span style="font-size: 10px; font-family: 'JetBrains Mono'; color: #06b6d4;" id="grover-iteration-label">Step 0/3</span>
+                    </div>
+                    <div class="grover-chart-bars" id="grover-bars" style="display: flex; height: 75px; align-items: flex-end; justify-content: space-between; padding-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 2px;"></div>
+                    <div style="font-size: 9px; color: #9ca3af; text-align: center; margin-top: 4px; font-family: 'Space Grotesk';">
+                        Specialty Probability Amplitude (20 channels)
+                    </div>
+                </div>
+
+                <div class="panel-card terminal-card flex-grow">
+                    <div class="card-header">
+                        <h2>Agent Reasoning Terminal</h2>
+                        <span class="badge" id="terminal-badge">Inactive</span>
+                    </div>
+                    <div class="terminal-logs" id="terminal-logs">
+                        <div class="log-entry system">[SYSTEM] WSE fabric loaded. 15,000 logical tiles configured in 20 specialty regions.</div>
+                        <div class="log-entry system">[SYSTEM] Opposite boundary nodes wrapped to form a toroidal mesh.</div>
+                        <div class="log-entry system">[SYSTEM] Helical magnetic field lines configured (pitch Px=2, Py=1). Ready for routing inputs.</div>
+                        <div class="log-entry action">[ACTION] Enter query and click "Run WSE TorusNet" to begin.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CENTER: 3D TORUS -->
+            <section class="center-panel">
+                <div class="canvas-container" id="canvas-container">
+                    <div class="canvas-overlay">
+                        <div class="torus-stats">
+                            <div>Nodes: <span class="highlight">15,000</span></div>
+                            <div>Fabric: <span class="highlight">214 Pb/s</span></div>
+                            <div class="desktop-only">Helical Pitch: <span class="highlight">Px=2, Py=1</span></div>
+                        </div>
+                        <div class="torus-legend">
+                            <h3>Wavelet Color Key</h3>
+                            <div class="legend-items">
+                                <div class="legend-item"><span class="color-dot reasoning"></span>Reasoning</div>
+                                <div class="legend-item"><span class="color-dot verification"></span>Verification</div>
+                                <div class="legend-item"><span class="color-dot memory"></span>Memory</div>
+                                <div class="legend-item"><span class="color-dot routing"></span>Routing</div>
+                                <div class="legend-item"><span class="color-dot repair"></span>Repair</div>
+                                <div class="legend-item"><span class="color-dot consensus"></span>Consensus</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT: TELEMETRY & BENCHMARK -->
+            <section class="panel right-panel">
+                <div class="panel-card telemetry-card">
+                    <h2>Live Fabric Telemetry</h2>
+                    <div class="telemetry-grid">
+                        <div class="tele-item">
+                            <span class="tele-label">Consensus Score</span>
+                            <span class="tele-val highlight" id="tele-consensus">0.0%</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="consensus-bar" style="width: 0%"></div></div>
+                        </div>
+                        <div class="tele-item">
+                            <span class="tele-label">Active Nodes</span>
+                            <span class="tele-val" id="tele-active">0 / 15,000</span>
+                        </div>
+                        <div class="tele-item">
+                            <span class="tele-label">In-Transit Wavelets</span>
+                            <span class="tele-val" id="tele-wavelets">0</span>
+                        </div>
+                        <div class="tele-item">
+                            <span class="tele-label">Congested Spots</span>
+                            <span class="tele-val warning" id="tele-congestion">0</span>
+                        </div>
+                    </div>
+                    <div id="score-hud" style="margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.18); font-family:'JetBrains Mono',monospace; font-size:10px; color:#9ca3af; text-align:center; line-height:1.5;">Run to start the consensus climb &#8594; <span style="color:var(--neon-magenta)">repair in FusionCore, then re-run to push it higher</span></div>
+                    <div class="wse-specs-footer" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 10.5px; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px;">
+                        <div><strong>WSE-3 / CS-3:</strong> 900,000 cores &middot; 46,225 mm&sup2; &middot; 4T transistors &middot; TSMC 5nm</div>
+                        <div><strong>Fabric:</strong> 2-D mesh &middot; 214 Pb/s &middot; 24 routing colors &middot; defect-tolerant, self-healing</div>
+                        <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px;">
+                            <span>Fabric hops: <strong id="tele-hw-latency" style="color: var(--accent);">0</strong></span>
+                            <span>Packets (32-bit): <strong id="tele-hw-volume" style="color: var(--neon-cyan);">0.00 KB</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card handoff-card">
+                    <h2>FusionCore Handoff</h2>
+                    <div id="handoff-status" style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; line-height:1.6;">
+                        [IDLE] No snapshot emitted yet. Run TorusNet to generate a state snapshot for the control agent.
+                    </div>
+                    <a href="fusioncore.html" class="btn secondary" style="margin-top:12px; text-align:center; text-decoration:none; display:block;">Open FusionCore Reactor &#8594;</a>
+                </div>
+
+                <div class="panel-card flex-grow" style="overflow-y:auto;">
+                    <h2>Cerebras Execution + Fabric Twin</h2>
+
+                    <!-- 1. Cerebras Live Inference -->
+                    <div style="font-family:'IBM Plex Mono',monospace;">
+                        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">
+                            <span>Cerebras Live Inference</span><span id="ci-request" style="color:var(--text-faint);">waiting</span>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <div style="flex:1;"><div style="font-size:9px; color:var(--text-faint); text-transform:uppercase;">Tokens/sec</div><div style="font-size:21px; font-weight:600; color:var(--accent);" id="ci-tps">&mdash;</div></div>
+                            <div style="flex:1;"><div style="font-size:9px; color:var(--text-faint); text-transform:uppercase;">Latency</div><div style="font-size:21px; font-weight:600;" id="ci-latency">&mdash;</div></div>
+                            <div style="flex:1;"><div style="font-size:9px; color:var(--text-faint); text-transform:uppercase;">TTFT</div><div style="font-size:21px; font-weight:600;" id="ci-ttft">&mdash;</div></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr auto; gap:3px 12px; margin-top:10px; font-size:10.5px; color:var(--text-muted);">
+                            <span>model</span><span id="ci-model" style="color:var(--text-primary);">gemma-4-31b</span>
+                            <span>prompt tokens</span><span id="ci-prompt" style="color:var(--text-primary);">&mdash;</span>
+                            <span>completion tokens</span><span id="ci-completion" style="color:var(--text-primary);">&mdash;</span>
+                            <span>total tokens</span><span id="ci-total" style="color:var(--text-primary);">&mdash;</span>
+                            <span>TPOT</span><span id="ci-tpot" style="color:var(--text-primary);">&mdash;</span>
+                            <span>queue time</span><span id="ci-queue" style="color:var(--text-primary);">&mdash;</span>
+                        </div>
+                        <div style="font-size:8.5px; color:var(--text-faint); margin-top:6px;" id="ci-note">waiting for live run &middot; run TorusNet</div>
+                    </div>
+
+                    <!-- 2. Fabric Twin Mini-Map -->
+                    <div style="border-top:1px solid var(--border); margin-top:12px; padding-top:12px; font-family:'IBM Plex Mono',monospace;">
+                        <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Cerebras-Inspired Fabric Twin</div>
+                        <canvas id="fabric-twin" style="width:100%; height:84px; display:block; background:var(--bg-sunken); border:1px solid var(--border); border-radius:3px;"></canvas>
+                        <div style="display:grid; grid-template-columns:1fr auto; gap:3px 12px; margin-top:8px; font-size:10px; color:var(--text-muted);">
+                            <span>hops</span><span id="ft-hops" style="color:var(--text-primary);">&mdash;</span>
+                            <span>locality</span><span id="ft-locality" style="color:var(--text-primary);">&mdash;</span>
+                            <span>congestion</span><span id="ft-congestion" style="color:var(--text-primary);">&mdash;</span>
+                            <span>active logical nodes</span><span id="ft-active" style="color:var(--text-primary);">&mdash;</span>
+                            <span>active fabric tiles</span><span id="ft-tiles" style="color:var(--text-primary);">&mdash;</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; margin-top:9px; font-size:8.5px; color:var(--text-muted);">
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:rgba(255,255,255,0.12);margin-right:5px;vertical-align:middle;"></i>inactive tile</span>
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:#f4a531;margin-right:5px;vertical-align:middle;"></i>mapped route</span>
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:#e2574c;margin-right:5px;vertical-align:middle;"></i>congestion hotspot</span>
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:#06b6d4;margin-right:5px;vertical-align:middle;"></i>rerouted path</span>
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:#3fb98c;margin-right:5px;vertical-align:middle;"></i>healthy active</span>
+                            <span><i style="display:inline-block;width:8px;height:8px;border-radius:1px;background:#8b5cf6;margin-right:5px;vertical-align:middle;"></i>repair / verifier</span>
+                        </div>
+                        <div style="font-size:8.5px; color:var(--text-faint); margin-top:7px;" id="ft-route">logical route &rarr; fabric path appears after a run</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="agent-tooltip" class="agent-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 1000; background: rgba(6, 8, 14, 0.95); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 11px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); backdrop-filter: blur(5px);"></div>
+
+    <script src="torusnet.js"></script>
+</body>
+</html>

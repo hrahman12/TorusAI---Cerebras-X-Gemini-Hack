@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FusionCore · Control Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <template id="__bundler_thumbnail" data-bg-color="#0a0b0e">
+      <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1200" height="800" fill="#0a0b0e"/>
+        <circle cx="600" cy="400" r="150" fill="none" stroke="#f4a531" stroke-width="14"/>
+        <circle cx="600" cy="400" r="46" fill="#f4a531"/>
+        <circle cx="600" cy="400" r="250" fill="none" stroke="#5a8ca8" stroke-width="4" opacity="0.5"/>
+      </svg>
+    </template>
+    <div class="app-container">
+        <header class="app-header">
+            <a class="logo-area" href="index.html" style="text-decoration:none;">
+                <span class="logo-mark"></span>
+                <div>
+                    <h1>PHASELOCK <span class="agent-tag control">FusionCoreNet</span></h1>
+                    <p class="subtitle">Reasoning-stability control engine · reactor view</p>
+                </div>
+            </a>
+            <nav class="page-nav">
+                <a href="index.html" class="home">Home</a>
+                <a href="torusnet.html" class="torus">TorusNet</a>
+                <a href="fusioncore.html" class="active fusion">FusionCore</a>
+            </nav>
+            <div class="system-status">
+                <span class="status-indicator" id="fc-status-dot" style="background:#6b7280;"></span>
+                <span id="fc-status-text">Awaiting TorusNet snapshot</span>
+            </div>
+        </header>
+
+        <main class="app-body" style="grid-template-columns: 365px 1fr 380px;">
+            <!-- LEFT: CONTROL PANEL -->
+            <section class="panel left-panel">
+                <div class="panel-card">
+                    <div class="card-header">
+                        <h2 class="fc">FusionCoreNet Reactor</h2>
+                        <span class="control-room-status"><span class="status-indicator" id="fc-mini-dot" style="background:#6b7280;"></span><span id="fc-mode-label">Balanced</span></span>
+                    </div>
+                    <div class="fc-mode-tabs" id="fc-mode-tabs">
+                        <button data-mode="fast">Fast Plasma</button>
+                        <button data-mode="balanced" class="active">Balanced Tokamak</button>
+                        <button data-mode="deep">Deep Stability</button>
+                        <button data-mode="experimental">Experimental Math</button>
+                    </div>
+                    <button id="analyze-btn" class="btn primary" style="width:100%;">Analyze TorusNet Snapshot</button>
+                    <button id="auto-btn" class="btn primary" style="width:100%; margin-top:8px; background:#5f7fb3; color:#0a1424;">Run Full System &middot; Auto-Converge</button>
+                    <button id="apply-btn" class="btn secondary" style="width:100%; margin-top:8px;" disabled>Apply Repairs &#8594; TorusNet</button>
+                </div>
+
+                <div class="panel-card">
+                    <h2 class="fc">Math Engines</h2>
+                    <div class="fc-engines" id="fc-engines">
+                        <label class="fc-engine"><input type="checkbox" data-engine="graph" checked> Graph Laplacian <span class="eng-eq">L = D &minus; A</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="entropy" checked> Information Entropy <span class="eng-eq">H = &minus;&Sigma;p&middot;log p</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="plasma" checked> Pressure&ndash;Capacity <span class="eng-eq">&beta;&#8776; = P/C</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="transport" checked> Graph Transport <span class="eng-eq">&rho;&#8242; = &rho;&minus;dt&middot;div J</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="control" checked> PID Control <span class="eng-eq">Kp&middot;e+Ki&#8747;+Kd&#8710;</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="lyapunov" checked> Lyapunov Stability <span class="eng-eq">&Delta;V &lt; 0</span></label>
+                        <label class="fc-engine"><input type="checkbox" data-engine="loop" checked> Loop Stability <span class="eng-eq">q&#8776; = c/r</span></label>
+                        <label class="fc-engine off"><input type="checkbox" data-engine="fusion"> Real Fusion Reference <span class="eng-eq">&beta;=p/p_B</span></label>
+                        <label class="fc-engine off"><input type="checkbox" data-engine="mcp"> External Physics MCP <span class="eng-eq">opt</span></label>
+                        <label class="fc-engine off"><input type="checkbox" data-engine="hyperbolic"> Hyperbolic Routing <span class="eng-eq">exp</span></label>
+                    </div>
+                </div>
+
+                <div class="panel-card flex-grow">
+                    <h2 class="fc">Control Parameters</h2>
+                    <div id="fc-sliders"></div>
+                </div>
+            </section>
+
+            <!-- CENTER: REACTOR -->
+            <section class="center-panel">
+                <div class="canvas-container" id="reactor-container">
+                    <div class="canvas-overlay">
+                        <div class="torus-stats" id="reactor-source">
+                            <div>Snapshot: <span class="highlight" id="rs-run">none</span></div>
+                            <div class="desktop-only">Active: <span class="highlight" id="rs-active">0</span></div>
+                            <div class="desktop-only">Round: <span class="highlight" id="rs-round">&mdash;</span></div>
+                        </div>
+                        <div class="torus-legend" style="align-self:flex-start;">
+                            <h3>Reactor Event Key</h3>
+                            <div class="legend-items">
+                                <div class="legend-item"><span class="color-dot repair"></span>Plasma hotspot</div>
+                                <div class="legend-item"><span class="color-dot verification"></span>Verifier bombardment</div>
+                                <div class="legend-item"><span class="color-dot routing"></span>Magnetic reroute</div>
+                                <div class="legend-item"><span class="color-dot memory"></span>Cooling pulse</div>
+                                <div class="legend-item"><span class="color-dot consensus"></span>Confinement field</div>
+                                <div class="legend-item"><span class="color-dot reasoning"></span>Stable cluster</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-card" style="margin:0 16px 16px; max-height:172px;">
+                    <div class="card-header">
+                        <h2 class="fc">Control-Room Log</h2>
+                        <span class="badge" id="fc-badge">Standby</span>
+                    </div>
+                    <div class="fusion-logs" id="control-log">
+                        <div class="fusion-entry">[FUSIONCORE] Control agent initialized. Graph dynamics, information theory, control theory and plasma-transport engines armed.</div>
+                        <div class="fusion-entry">[FUSIONCORE] Awaiting a TorusNet reasoning snapshot to diagnose.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT: METRICS + REPAIR LOG -->
+            <section class="panel right-panel">
+                <div class="panel-card">
+                    <h2 class="fc">Stability Metrics</h2>
+                    <div class="fc-metrics-grid" id="fc-metrics">
+                        <div class="fc-metric" data-metric="stability"><div class="m-sym">&Psi;</div><div class="m-label">Stability</div><div class="m-val" id="m-stability">&mdash;</div><div class="m-bar"><div id="b-stability"></div></div></div>
+                        <div class="fc-metric" data-metric="entropy"><div class="m-sym">H</div><div class="m-label">Entropy</div><div class="m-val" id="m-entropy">&mdash;</div><div class="m-bar"><div id="b-entropy"></div></div></div>
+                        <div class="fc-metric" data-metric="beta"><div class="m-sym">&beta;</div><div class="m-label">Beta-like Pressure</div><div class="m-val" id="m-beta">&mdash;</div><div class="m-bar"><div id="b-beta"></div></div></div>
+                        <div class="fc-metric" data-metric="q"><div class="m-sym">q</div><div class="m-label">Loop Risk q-like</div><div class="m-val" id="m-q">&mdash;</div><div class="m-bar"><div id="b-q"></div></div></div>
+                        <div class="fc-metric" data-metric="congestion"><div class="m-sym">&#9650;</div><div class="m-label">Congestion</div><div class="m-val" id="m-congestion">&mdash;</div><div class="m-bar"><div id="b-congestion"></div></div></div>
+                        <div class="fc-metric" data-metric="consensus"><div class="m-sym">&Sigma;</div><div class="m-label">Consensus</div><div class="m-val" id="m-consensus">&mdash;</div><div class="m-bar"><div id="b-consensus"></div></div></div>
+                    </div>
+                    <div style="margin-top:10px; font-size:10px; color:var(--text-muted); font-family:'IBM Plex Mono',monospace; line-height:1.7;">
+                        &lambda;&#8322; connectivity <strong id="m-lambda" style="color:var(--neon-cyan);">&mdash;</strong> &middot; diffusion <strong id="m-diffusion" style="color:var(--neon-cyan);">&mdash;</strong> &middot; flux div <strong id="m-flux" style="color:var(--neon-cyan);">&mdash;</strong><br>
+                        Lyapunov V <strong id="m-lyap" style="color:var(--accent);">&mdash;</strong> &middot; &Delta;V <strong id="m-dv" style="color:var(--accent);">&mdash;</strong> <span id="m-lyap-status" style="color:var(--text-faint);"></span>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h2 class="fc">Equation Trace</h2>
+                    <div id="eq-trace" style="display:flex; flex-direction:column; gap:7px;">
+                        <div class="idle-hint" style="padding:14px;">Analyze to trace each engine &mdash; equation, value, threshold, action.</div>
+                    </div>
+                </div>
+
+                <div class="panel-card" id="fusion-ref-card" style="display:none;">
+                    <h2 class="fc">Real Fusion Reference</h2>
+                    <div style="font-size:9.5px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace; margin-bottom:8px; line-height:1.5;">Actual plasma physics &mdash; separate from the AI-graph analogues above. Reference only.</div>
+                    <div id="fusion-ref" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted); line-height:1.8;"></div>
+                </div>
+
+                <div class="panel-card">
+                    <h2 class="fc">Before / After Repair</h2>
+                    <div class="fc-ba">
+                        <div class="ba-col"><div class="ba-lab">Stability before</div><div class="ba-num" id="ba-before" style="color:var(--neon-red);">&mdash;</div></div>
+                        <div class="ba-arrow">&#8594;</div>
+                        <div class="ba-col"><div class="ba-lab">Stability after</div><div class="ba-num" id="ba-after" style="color:var(--neon-green);">&mdash;</div></div>
+                    </div>
+                    <div id="ba-note" style="margin-top:10px; font-size:11px; color:var(--text-muted); text-align:center; line-height:1.5;">Run an analysis to project repair impact.</div>
+                </div>
+
+                <div class="panel-card">
+                    <h2 class="fc">Convergence Timeline</h2>
+                    <div id="conv-timeline" style="display:flex; flex-direction:column; gap:4px; font-family:'IBM Plex Mono',monospace; font-size:10px;">
+                        <div class="idle-hint" style="padding:10px;">Analyze or auto-converge to chart cycles.</div>
+                    </div>
+                </div>
+
+                <div class="panel-card flex-grow">
+                    <div class="card-header">
+                        <h2 class="fc">Repair Action Log</h2>
+                        <span class="badge" id="repair-count" style="background:rgba(236,72,153,0.15); color:#f9a8d4;">0</span>
+                    </div>
+                    <div id="repair-log" style="overflow-y:auto; flex-grow:1;">
+                        <div class="idle-hint">No repair actions yet.<br>Open <a href="torusnet.html">TorusNet</a>, run a query, then return here and click <strong>Analyze</strong>.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="fusioncore.js"></script>
+</body>
+</html>
